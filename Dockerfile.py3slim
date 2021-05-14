@@ -1,0 +1,15 @@
+FROM python:3.9-slim
+
+MAINTAINER Steve Kieu <msh.computing@gmail.com>
+
+ENV ANSIBLE_VERSION=3.4.0
+
+RUN set -xe \
+    pip3 install ansible azure-cli \
+    && mkdir -p /usr/share/ansible/collections \
+    && ansible-galaxy collection install kubernetes.core -p /usr/share/ansible/collections \
+    && mkdir -p /etc/ansible \
+    && echo -e "[local]\nlocalhost ansible_connection=local" > \
+        /etc/ansible/hosts
+
+CMD ["ansible", "--version"]

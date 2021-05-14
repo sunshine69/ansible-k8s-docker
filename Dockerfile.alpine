@@ -1,0 +1,30 @@
+#FROM python:alpine
+FROM python:3.9.5-alpine3.13
+
+MAINTAINER Steve Kieu <msh.computing@gmail.com>
+
+ENV ANSIBLE_VERSION=3.4.0
+
+RUN set -xe \
+    && echo "****** Install system dependencies ******" \
+    && apk add --no-cache --progress python3 py3-pip openssl rust cargo \
+		ca-certificates git openssh sshpass \
+	&& apk --update add --virtual build-dependencies \
+		python3-dev libffi-dev openssl-dev build-base \
+	&& echo "****** Install ansible and python dependencies ******" \
+    && pip3 --no-cache-dir install --upgrade pip \
+	&& pip3 --no-cache-dir install ansible==${ANSIBLE_VERSION} boto3 \
+    && mkdir -p /usr/share/ansible/collections \
+    && ansible-galaxy collection install kubernetes.core -p /usr/share/ansible/collections \
+    && echo "****** Install azure cli *****" \
+    && pip3 --no-cache-dir install azure-cli \
+    && echo "****** Remove unused system librabies ******" \
+	&& apk del build-dependencies \
+	&& rm -rf /var/cache/apk/*
+
+RUN set -xe \
+    && mkdir -p /etc/ansible \
+    && echo -e "[local]\nlocalhost ansible_connection=local" > \
+        /etc/ansible/hosts
+
+CMD ["ansible", "--version"]
